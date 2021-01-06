@@ -1,19 +1,23 @@
 package main
 
 import (
-	"bufio"
 	"encoding/csv"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"strings"
+	"time"
 )
 
 const (
 	defaultFile = "problems.csv"
 	usage       = "a csv file in the format of 'question,answer'"
 )
+
+type problem struct {
+	question string
+	answer   string
+}
 
 func main() {
 	csvFile := flag.String("csv", defaultFile, usage)
@@ -32,27 +36,40 @@ func main() {
 
 	score := 0
 	total := len(lines)
+	timeLimit := 2 * time.Second
 	for index, line := range lines {
-		question := line[0]
-		answer := line[1]
+		p := problem{question: line[0], answer: line[1]}
 
-		fmt.Printf("Problem #%d: %s = ", index+1, question)
+		fmt.Printf("Problem #%d: %s = ", index+1, p.question)
 
-		reader := bufio.NewReader(os.Stdin)
-
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			log.Fatal(err)
+		select {
+		case <-time.After(timeLimit):
+			fmt.Printf("You scored %d of %d.\n", score, total)
+			return
+		case answer := <-receiveAnswer():
+			if checkAnswer(p.answer, answer) {
+				score++
+			}
 		}
-
-		input = strings.TrimSuffix(input, "\n")
-
-		// log.Printf("input=%q, answer=%q", input, answer)
-		if input == answer {
-			score++
-		}
-
 	}
 
 	fmt.Printf("You scored %d of %d.\n", score, total)
+}
+
+func receiveAnswer() chan string {
+	ch := make(chan string)
+	var answer string
+
+	go func() {
+		fmt.Scanf("%s\n", &answer)
+		ch <- answer
+	}()
+
+	return ch
+}
+
+func checkAnswer(want, got string) bool {
+	// debug
+	log.Printf("got=%q, want=%q", got, want)
+	return got == want
 }
