@@ -9,18 +9,14 @@ import (
 	"time"
 )
 
-const (
-	defaultFile = "problems.csv"
-	usage       = "a csv file in the format of 'question,answer'"
-)
-
 type problem struct {
 	question string
 	answer   string
 }
 
 func main() {
-	csvFile := flag.String("csv", defaultFile, usage)
+	csvFile := flag.String("csv", "problems.csv", "a csv file in the format of 'question,answer'")
+	timeLimit := flag.Duration("limit", 30*time.Second, "the time limit for the quiz in seconds")
 	flag.Parse()
 
 	file, err := os.Open(*csvFile)
@@ -36,14 +32,13 @@ func main() {
 
 	score := 0
 	total := len(lines)
-	timeLimit := 2 * time.Second
 	for index, line := range lines {
 		p := problem{question: line[0], answer: line[1]}
 
 		fmt.Printf("Problem #%d: %s = ", index+1, p.question)
 
 		select {
-		case <-time.After(timeLimit):
+		case <-time.After(*timeLimit):
 			fmt.Printf("You scored %d of %d.\n", score, total)
 			return
 		case answer := <-receiveAnswer():
