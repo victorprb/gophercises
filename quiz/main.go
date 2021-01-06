@@ -9,14 +9,9 @@ import (
 	"time"
 )
 
-type problem struct {
-	question string
-	answer   string
-}
-
 func main() {
 	csvFile := flag.String("csv", "problems.csv", "a csv file in the format of 'question,answer'")
-	timeLimit := flag.Duration("limit", 30*time.Second, "the time limit for the quiz in seconds")
+	timeLimit := flag.Int("limit", 30, "the time limit for the quiz in seconds")
 	flag.Parse()
 
 	file, err := os.Open(*csvFile)
@@ -32,17 +27,26 @@ func main() {
 
 	score := 0
 	total := len(lines)
+	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)
+
+problemloop:
 	for index, line := range lines {
 		p := problem{question: line[0], answer: line[1]}
-
 		fmt.Printf("Problem #%d: %s = ", index+1, p.question)
 
+		answerCh := make(chan string)
+		go func() {
+			var answer string
+			fmt.Scanf("%s\n", &answer)
+			answerCh <- answer
+		}()
+
 		select {
-		case <-time.After(*timeLimit):
-			fmt.Printf("You scored %d of %d.\n", score, total)
-			return
-		case answer := <-receiveAnswer():
-			if checkAnswer(p.answer, answer) {
+		case <-timer.C:
+			fmt.Println()
+			break problemloop
+		case answer := <-answerCh:
+			if answer == p.answer {
 				score++
 			}
 		}
@@ -51,20 +55,7 @@ func main() {
 	fmt.Printf("You scored %d of %d.\n", score, total)
 }
 
-func receiveAnswer() chan string {
-	ch := make(chan string)
-	var answer string
-
-	go func() {
-		fmt.Scanf("%s\n", &answer)
-		ch <- answer
-	}()
-
-	return ch
-}
-
-func checkAnswer(want, got string) bool {
-	// debug
-	log.Printf("got=%q, want=%q", got, want)
-	return got == want
+type problem struct {
+	question string
+	answer   string
 }
