@@ -6,13 +6,14 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/victorprb/gophercises/urlshort/urlshort"
 )
 
 func main() {
-	var ymlFile string
-	flag.StringVar(&ymlFile, "file", "paths-to-urls.yaml", "a yaml file with path to url map list")
+	var filename string
+	flag.StringVar(&filename, "file", "example.yaml", "a file with list of paths to urls (json or yaml)")
 	flag.Parse()
 
 	mux := defaultMux()
@@ -24,19 +25,25 @@ func main() {
 	}
 	mapHandler := urlshort.MapHandler(pathsToUrls, mux)
 
-	// Build the YAMLHandler using the mapHandler as the
+	// Build the YAMLhandler or JSONHandler using the mapHandler as the
 	// fallback
-	yaml, err := ioutil.ReadFile(ymlFile)
+	file, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
 
-	yamlHandler, err := urlshort.YAMLHandler(yaml, mapHandler)
+	var handler http.Handler
+	switch filename {
+	case suffix(filename, ".json"):
+		handler, err = urlshort.YAMLHandler(file, mapHandler)
+	default:
+		handler, err = urlshort.JSONHandler(file, mapHandler)
+	}
 	if err != nil {
-		log.Fatalf("error: %v", err)
+		log.Fatalf("error: %v\n", err)
 	}
 	log.Println("Starting the server on :8080")
-	http.ListenAndServe(":8080", yamlHandler)
+	http.ListenAndServe(":8080", handler)
 }
 
 func defaultMux() *http.ServeMux {
@@ -47,4 +54,14 @@ func defaultMux() *http.ServeMux {
 
 func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, world!")
+}
+
+func suffix(s string, suffix string) string {
+	if strings.HasSuffix(s, suffix) {
+		suffixIndex := strings.LastIndex(s, suffix)
+
+		return strings.TrimPrefix(s, s[:suffixIndex])
+	}
+
+	return s
 }

@@ -1,7 +1,7 @@
 package urlshort
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 
 	"gopkg.in/yaml.v2"
@@ -40,35 +40,56 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 //
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
-func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	parsedYaml, err := parseYAML(yml)
+func YAMLHandler(data []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	parsedYAML, err := parseYAML(data)
 	if err != nil {
 		return nil, err
 	}
-	pathMap := buildMap(parsedYaml)
+	pathMap := buildMap(parsedYAML)
 	return MapHandler(pathMap, fallback), nil
 }
 
-type URLmap struct {
+// JSONHandler has the same implementation as YAMLHandler, but
+// it parses JSON data instead
+func JSONHandler(data []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	parsedJSON, err := parseJSON(data)
+	if err != nil {
+		return nil, err
+	}
+	pathMap := buildMap(parsedJSON)
+	return MapHandler(pathMap, fallback), nil
+}
+
+type urlMap struct {
 	Path string
 	URL  string
 }
 
-func parseYAML(yml []byte) ([]URLmap, error) {
-	URLmaps := []URLmap{}
+func parseJSON(data []byte) ([]urlMap, error) {
+	urlMaps := []urlMap{}
 
-	err := yaml.Unmarshal(yml, &URLmaps)
+	err := json.Unmarshal(data, &urlMaps)
 	if err != nil {
-		fmt.Printf("error: %v", err)
 		return nil, err
 	}
 
-	return URLmaps, nil
+	return urlMaps, nil
 }
 
-func buildMap(URLMaps []URLmap) map[string]string {
-	pathMap := make(map[string]string, len(URLMaps))
-	for _, v := range URLMaps {
+func parseYAML(data []byte) ([]urlMap, error) {
+	urlMaps := []urlMap{}
+
+	err := yaml.Unmarshal(data, &urlMaps)
+	if err != nil {
+		return nil, err
+	}
+
+	return urlMaps, nil
+}
+
+func buildMap(urlMaps []urlMap) map[string]string {
+	pathMap := make(map[string]string, len(urlMaps))
+	for _, v := range urlMaps {
 		pathMap[v.Path] = v.URL
 	}
 
