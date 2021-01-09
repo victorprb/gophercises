@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/victorprb/gophercises/urlshort/urlshort"
+	"github.com/victorprb/gophercises/urlshort"
 )
 
 func main() {

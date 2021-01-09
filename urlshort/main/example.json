@@ -1,0 +1,10 @@
+[
+    {
+        "path": "/us",
+        "url": "https://github.com/gophercises/urlshort"
+    },
+    {
+        "path": "/usf",
+        "url": "https://github.com/gophercises/urlshort/tree/solution"
+    }
+]
