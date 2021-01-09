@@ -33,11 +33,11 @@ func main() {
 	}
 
 	var handler http.Handler
-	switch filename {
-	case suffix(filename, ".json"):
-		handler, err = urlshort.YAMLHandler(file, mapHandler)
-	default:
+	switch {
+	case strings.HasSuffix(filename, ".json"):
 		handler, err = urlshort.JSONHandler(file, mapHandler)
+	default:
+		handler, err = urlshort.YAMLHandler(file, mapHandler)
 	}
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
@@ -54,14 +54,4 @@ func defaultMux() *http.ServeMux {
 
 func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, world!")
-}
-
-func suffix(s string, suffix string) string {
-	if strings.HasSuffix(s, suffix) {
-		suffixIndex := strings.LastIndex(s, suffix)
-
-		return strings.TrimPrefix(s, s[:suffixIndex])
-	}
-
-	return s
 }
