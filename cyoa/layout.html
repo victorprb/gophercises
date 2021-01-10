@@ -4,9 +4,13 @@
 <p>{{.}}</p>
 {{end}}
 
+{{if .Options}}
 <h4>Options</h3>
 <ul>
     {{range .Options}}
     <li><a href="/{{.Arc}}">{{.Text}}</a></li>
     {{end}}
 </ul>
+{{else}}
+<i>The end</i>
+{{end}}

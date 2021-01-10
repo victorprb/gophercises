@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -28,44 +27,21 @@ func main() {
 	flag.StringVar(&filename, "file", "story.json", "a json file with the story")
 	flag.Parse()
 
-	data := readFile(filename)
-
-	parsedStory, err := parseStory(data)
+	storyJSON := readFile(filename)
+	parsedStory, err := parseStory(storyJSON)
 	if err != nil {
 		log.Fatalf("Could not parse json: %v", err)
 	}
 
 	tmpl := template.Must(template.ParseFiles("layout.html"))
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		tmpl.Execute(w, parsedStory["intro"])
-	})
 
-	http.HandleFunc("/new-york", func(w http.ResponseWriter, r *http.Request) {
-		tmpl.Execute(w, parsedStory["new-york"])
-	})
-
-	http.HandleFunc("/denver", func(w http.ResponseWriter, r *http.Request) {
-		tmpl.Execute(w, parsedStory["denver"])
-	})
-
-	// for arc, storyArc := range parsedStory {
-	// 	http.HandleFunc("/"+arc, func(w http.ResponseWriter, r *http.Request) {
-	// 		tmpl.Execute(w, storyArc)
-	// 	})
-	// }
-
-	// mux.HandleFunc("/", storyHandler(parsedStory["intro"]))
-	// mux.HandleFunc("/new-york", storyHandler(parsedStory["new-york"]))
+	for arcName, arc := range parsedStory {
+		http.Handle("/"+arcName, logHandler(arcHandler(arc, tmpl)))
+	}
 
 	log.Println("Starting the server")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
-}
-
-func storyHandler(a arc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, a.Title)
-	}
 }
 
 func readFile(filename string) []byte {
@@ -85,4 +61,18 @@ func parseStory(data []byte) (story, error) {
 	}
 
 	return s, nil
+}
+
+func arcHandler(a arc, tmpl *template.Template) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tmpl.Execute(w, a)
+	})
+}
+
+func logHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("method=%s, path=%s\n", r.Method, r.URL.Path)
+
+		next.ServeHTTP(w, r)
+	})
 }
