@@ -1,6 +1,6 @@
 <h1>{{.Title}}</h1>
 
-{{range .Story}}
+{{range .Paragraphs}}
 <p>{{.}}</p>
 {{end}}
 
@@ -8,7 +8,7 @@
 <h4>Options</h3>
 <ul>
     {{range .Options}}
-    <li><a href="/{{.Arc}}">{{.Text}}</a></li>
+    <li><a href="/{{.Chapter}}">{{.Text}}</a></li>
     {{end}}
 </ul>
 {{else}}
