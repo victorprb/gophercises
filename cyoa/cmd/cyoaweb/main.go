@@ -21,7 +21,7 @@ func main() {
 		log.Fatalf("Could not open file: %v", err)
 	}
 
-	story, err := cyoa.JsonStory(file)
+	story, err := cyoa.JSONStory(file)
 	if err != nil {
 		log.Fatalf("Could not decode json: %v", err)
 	}
