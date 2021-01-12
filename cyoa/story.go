@@ -94,9 +94,9 @@ func WithTemplate(t *template.Template) HandlerOption {
 	}
 }
 
-// ChapterParser is an option to provide a custom function
+// WithChapterParser is an option to provide a custom function
 // for processing the story chapter from the incoming request.
-func ChapterParser(fn func(r *http.Request) string) HandlerOption {
+func WithChapterParser(fn func(r *http.Request) string) HandlerOption {
 	return func(h *handler) {
 		h.pathFn = fn
 	}
